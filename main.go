@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func rText(length int) string {
+func randtext(length int) string {
 	const charset string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)
 	for i := range b {
@@ -17,7 +17,7 @@ func rText(length int) string {
 
 func calc(s, e int, writerChan chan string, done chan struct{}) {
 	for i := s; i <= e; i++ {
-		line := rText(6) + "\n"
+		line := randtext(6) + "\n"
 		writerChan <- line
 	}
 	done <- struct{}{}
