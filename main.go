@@ -1,14 +1,24 @@
 package main
 
 import (
-	"fmt"
+	"log"
+	"math/rand"
 	"os"
 )
 
-func calc(s, e int, writeChan chan string, done chan struct{}) {
+func rText(length int) string {
+	const charset string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
+func calc(s, e int, writerChan chan string, done chan struct{}) {
 	for i := s; i <= e; i++ {
-		line := fmt.Sprintf("%06x\n", i)
-		writeChan <- line
+		line := rText(6) + "\n"
+		writerChan <- line
 	}
 	done <- struct{}{}
 }
@@ -16,38 +26,37 @@ func calc(s, e int, writeChan chan string, done chan struct{}) {
 func main() {
 	f, err := os.Create("f.out")
 	if err != nil {
-		panic(err)
+		log.Printf("err creating file %v", f)
 	}
 	defer f.Close()
 
 	grt := 10
-	fn := 1677215
+	final := 10_000_000
 	done := make(chan struct{})
 	writeChan := make(chan string)
-	defer close(writeChan)
 
 	go func() {
 		for line := range writeChan {
 			_, err := f.WriteString(line)
 			if err != nil {
-				panic(err)
+				log.Printf("err writting in file %v", err.Error())
 			}
 		}
 	}()
 
-	chunk := (fn / grt) + 1
-	for i := 0; i <= fn; i += chunk {
+	chunk := (final / grt) + 1
+	for i := 0; i <= final; i += chunk {
 		step := i + chunk - 1
-		if step > min(fn) {
-			step = fn
+		if step > min(final) {
+			step = final
 		}
-		fmt.Printf("running %d %d\n", i, step)
+		log.Printf("running %d %d\n", i, step)
 		go calc(i, step, writeChan, done)
 	}
 
 	for i := range grt {
 		<-done
-		fmt.Printf("done #%d\n", i)
+		log.Printf("done #%d\n", i)
 	}
-	fmt.Println("exit")
+	print("exit\n")
 }
